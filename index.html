@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#245f5a">
+  <title>EquipControl — Equipamentos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <section class="login-screen" id="loginScreen">
+    <div class="login-card">
+      <div class="brand login-brand">
+        <div class="brand-mark"><svg class="ui-icon" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m21 8-9-5-9 5 9 5 9-5Z"/><path d="M3 8v9l9 5 9-5V8"/><path d="M12 13v9"/></svg></div>
+        <div>
+          <strong>Equip<span>Control</span></strong>
+          <small>Gestão de equipamentos</small>
+        </div>
+      </div>
+      <div class="login-title">
+        <p class="eyebrow">ACESSO RESTRITO</p>
+        <h1>Entrar</h1>
+        <p>Acesse o painel de equipamentos.</p>
+      </div>
+      <form id="loginForm" class="login-form">
+        <label>Usuário<input id="loginUsername" type="text" autocomplete="username" required placeholder="Digite seu usuário"></label>
+        <label>Senha<input id="loginPassword" type="password" autocomplete="current-password" required></label>
+        <p class="login-error hidden" id="loginError">Usuário ou senha incorretos.</p>
+        <button class="primary login-button" type="submit" id="loginButton">Entrar</button>
+      </form>
+      <small class="security-note">A senha não é armazenada em texto puro. A verificação usa Argon2id.</small>
+    </div>
+  </section>
+
+  <main class="main hidden" id="app">
+    <header class="page-header">
+      <div class="brand">
+        <div class="brand-mark"><svg class="ui-icon" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m21 8-9-5-9 5 9 5 9-5Z"/><path d="M3 8v9l9 5 9-5V8"/><path d="M12 13v9"/></svg></div>
+        <div>
+          <strong>Equip<span>Control</span></strong>
+          <small>Gestão de equipamentos</small>
+        </div>
+      </div>
+      <div class="header-content">
+        <div>
+          <p class="eyebrow">CONTROLE DE PATRIMÔNIO</p>
+          <h1>Equipamentos</h1>
+          <p class="subtitle">Gerencie equipamentos, quantidades e status em um só lugar.</p>
+        </div>
+        <div class="header-actions">
+          <button class="secondary" id="exportBtn"><svg class="ui-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg> Exportar .xlsx</button>
+          <button class="secondary" id="logoutBtn"><svg class="ui-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/><path d="M21 3v18"/></svg> Sair</button>
+          <button class="primary" id="newBtn"><svg class="ui-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> Novo equipamento</button>
+        </div>
+      </div>
+    </header>
+
+    <section class="stats">
+      <div class="stat"><div class="stat-icon"><svg class="ui-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m21 8-9-5-9 5 9 5 9-5Z"/><path d="M3 8v9l9 5 9-5V8"/><path d="M12 13v9"/></svg></div><div><span>Total de itens</span><strong id="total">0</strong></div></div>
+      <div class="stat"><div class="stat-icon"><svg class="ui-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4 4L19 6"/></svg></div><div><span>Em uso</span><strong id="inUse">0</strong></div></div>
+      <div class="stat"><div class="stat-icon"><svg class="ui-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16v13H4z"/><path d="M3 4h18v3H3z"/><path d="M9 11h6"/></svg></div><div><span>Guardados</span><strong id="stored">0</strong></div></div>
+      <div class="stat"><div class="stat-icon"><svg class="ui-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m14.7 6.3 3 3L8.8 18.2 5 19l.8-3.8Z"/><path d="m13 8 3 3"/></svg></div><div><span>Em manutenção</span><strong id="maintenance">0</strong></div></div>
+    </section>
+
+    <section class="panel" id="inventory">
+      <div class="panel-top">
+        <div>
+          <h2>Equipamentos cadastrados</h2>
+          <p id="resultCount">0 equipamentos encontrados</p>
+        </div>
+        <div class="bulk-actions hidden" id="bulkActions"><button class="secondary" id="bulkBtn"><svg class="ui-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13"/><path d="M3 6h.01M3 12h.01M3 18h.01"/></svg> Editar selecionados</button><button class="danger" id="bulkDeleteBtn"><svg class="ui-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="m19 6-1 14H6L5 6"/></svg> Excluir selecionados</button></div>
+      </div>
+
+      <div class="filters">
+        <div class="search"><svg class="ui-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><input id="search" placeholder="Buscar equipamento..."></div>
+        <select id="statusFilter"><option>Todos</option><option>Guardado</option><option>Em Uso</option><option>Manutenção</option></select>
+        <select id="departmentFilter"><option>Todos</option></select>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th class="check"><input id="selectAll" type="checkbox"></th><th>Equipamento</th><th>Departamento</th><th>Valor</th><th>Quantidade</th><th>Status</th><th></th></tr></thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+        <div class="empty hidden" id="empty"><div class="empty-icon">▣</div><b>Nenhum equipamento encontrado</b><span>Tente alterar os filtros ou cadastre um novo equipamento.</span></div>
+      </div>
+    </section>
+  </main>
+
+  <div class="overlay hidden" id="modal"><div class="modal">
+    <div class="modal-head"><div><h2 id="modalTitle">Novo equipamento</h2><p>Preencha os dados do equipamento e a quantidade disponível.</p></div><button class="close" id="closeModal" aria-label="Fechar"><svg class="ui-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>
+    <form id="equipmentForm">
+      <div class="form-grid">
+        <label>Nome do equipamento<input required id="name" placeholder="Ex.: Notebook Dell"></label>
+        <label>Departamento<input required id="department" placeholder="Ex.: TI"></label>
+        <label>Valor unitário<input id="value" type="number" min="0" step="0.01"></label>
+        <label>Quantidade<input id="quantity" type="number" min="1" step="1" value="1"></label>
+        <label class="full">Descrição<textarea id="description" rows="4" placeholder="Descreva o equipamento..."></textarea></label>
+        <label>URL da imagem <span class="optional">(opcional)</span><input id="image" placeholder="https://..."></label>
+        <label>Ou envie uma imagem <span class="optional">(opcional)</span><input id="imageFile" type="file" accept="image/*"></label>
+      </div>
+      <p class="form-hint">Cada equipamento possui um único cadastro. A quantidade representa quantas unidades desse item existem.</p><p class="form-hint">Imagens enviadas pelo computador são armazenadas no navegador e podem ser incluídas diretamente no Excel.</p>
+      <div class="modal-actions"><button type="button" class="secondary" id="cancelModal">Cancelar</button><button class="primary" type="submit" id="saveBtn">✓ Cadastrar equipamento</button></div>
+    </form>
+  </div></div>
+
+  <div class="overlay hidden" id="bulkModal"><div class="modal small">
+    <div class="modal-head"><div><h2>Atualização em massa</h2><p>Alteração aplicada aos registros selecionados.</p></div><button class="close" id="closeBulk" aria-label="Fechar"><svg class="ui-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>
+    <div class="bulk"><p>O novo status será aplicado aos <b id="selectedCount">0 equipamentos</b>.</p><label>Novo status<select id="bulkStatus"><option>Guardado</option><option>Em Uso</option><option>Manutenção</option></select></label><div class="modal-actions"><button class="secondary" id="cancelBulk">Cancelar</button><button class="primary" id="applyBulk">✓ Aplicar alteração</button></div></div>
+  </div></div>
+
+  <div class="overlay hidden" id="deleteModal"><div class="modal small confirmation-modal">
+    <div class="confirm-icon"><svg class="ui-icon" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 20h20L12 3Z"/><path d="M12 9v5M12 17h.01"/></svg></div>
+    <div class="modal-head"><div><h2>Excluir equipamento?</h2><p id="deleteMessage">Esta ação removerá o registro.</p></div><button class="close" id="closeDelete" aria-label="Fechar"><svg class="ui-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>
+    <div class="modal-actions"><button class="secondary" id="cancelDelete">Cancelar</button><button class="danger" id="confirmDelete">Excluir</button></div>
+  </div></div>
+
+  <div class="toast hidden" id="toast"><span class="toast-message"></span><button id="undoBtn"><svg class="ui-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h9a7 7 0 1 1 0 14h-2"/></svg> Desfazer</button></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/argon2-browser@1.18.0/dist/argon2-bundled.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
