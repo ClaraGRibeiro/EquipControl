@@ -1,13 +1,6 @@
 const KEY='equip-control-data-v1';
 const AUTH_KEY='equip-control-auth-v1';
-const seed=[
-{id:'1',name:'Microscópio Óptico',department:'Laboratório',value:4200,description:'Microscópio óptico binocular para atividades acadêmicas.',quantity:3,image:'',status:'Em Uso'},
-{id:'2',name:'Notebook Dell',department:'TI',value:3890,description:'Notebook para uso administrativo e desenvolvimento.',quantity:1,image:'',status:'Em Uso'},
-{id:'3',name:'Projetor Epson',department:'Sala 204',value:2750,description:'Projetor multimídia para apresentações e aulas.',quantity:1,image:'',status:'Guardado'},
-{id:'4',name:'Balança de Precisão',department:'Química',value:1680,description:'Balança digital de precisão para laboratório.',quantity:1,image:'',status:'Em Uso'}
-];
-
-const AUTH={user:'adminotmg',salt:'Qqdjf9awGUBf9UQ8Mg9UPw==',hash:'AdMZ4WwonqNLd07i4mBV/zkGBni9xGHnABFr8VGE1Mc=',memory:65536,time:3,parallelism:2,hashLength:32};
+const AUTH={userSalt:'QKfZvMHrFlyukcNCfehsHg==',userHash:'pRlheaocQH0enQrC1/NiB0MtGfCYmn8tnPGflg4nwDI=',passwordSalt:'Qqdjf9awGUBf9UQ8Mg9UPw==',passwordHash:'AdMZ4WwonqNLd07i4mBV/zkGBni9xGHnABFr8VGE1Mc=',memory:65536,time:3,parallelism:2,hashLength:32};
 let items=migrateData(load());
 let selected=[];
 let editing=null;
@@ -19,12 +12,12 @@ let undoTimer=null;
 const $=id=>document.getElementById(id);
 function load(){try{
   const stored=localStorage.getItem(KEY);
-  if(stored===null)return seed;
+  if(stored===null)return [];
   const parsed=JSON.parse(stored);
-  return Array.isArray(parsed)?parsed:seed;
-}catch{return seed}}
+  return Array.isArray(parsed)?parsed:[];
+}catch{return []}}
 function migrateData(data){
-  if(!Array.isArray(data))return seed;
+  if(!Array.isArray(data))return [];
   if(!data.length)return data;
   if(!data.some(item=>item.groupId))return data;
   const groups=new Map();
@@ -53,11 +46,13 @@ function base64ToBuffer(base64){const binary=atob(base64);const bytes=new Uint8A
 function dataUrlParts(dataUrl){const match=String(dataUrl||'').match(/^data:([^;]+);base64,(.+)$/);return match?{mime:match[1],base64:match[2]}:null}
 function isLoggedIn(){return sessionStorage.getItem(AUTH_KEY)==='1'}
 
-async function verifyPassword(password){
+async function verifyCredentials(username,password){
   if(!window.argon2)throw new Error('Biblioteca de segurança indisponível.');
-  const result=await argon2.hash({pass:password,salt:new Uint8Array(base64ToBuffer(AUTH.salt)),type:argon2.ArgonType.Argon2id,time:AUTH.time,mem:AUTH.memory,parallelism:AUTH.parallelism,hashLen:AUTH.hashLength});
-  const actual=btoa(String.fromCharCode(...result.hash));
-  return actual===AUTH.hash;
+  const userResult=await argon2.hash({pass:username,salt:new Uint8Array(base64ToBuffer(AUTH.userSalt)),type:argon2.ArgonType.Argon2id,time:AUTH.time,mem:AUTH.memory,parallelism:AUTH.parallelism,hashLen:AUTH.hashLength});
+  const passwordResult=await argon2.hash({pass:password,salt:new Uint8Array(base64ToBuffer(AUTH.passwordSalt)),type:argon2.ArgonType.Argon2id,time:AUTH.time,mem:AUTH.memory,parallelism:AUTH.parallelism,hashLen:AUTH.hashLength});
+  const userHash=btoa(String.fromCharCode(...userResult.hash));
+  const passwordHash=btoa(String.fromCharCode(...passwordResult.hash));
+  return userHash===AUTH.userHash&&passwordHash===AUTH.passwordHash;
 }
 
 function getFilteredItems(){
@@ -224,7 +219,7 @@ async function exportXlsx(){
 
 async function login(e){
   e.preventDefault();const user=$('loginUsername').value.trim().toLowerCase();const password=$('loginPassword').value;$('loginError').classList.add('hidden');$('loginButton').disabled=true;$('loginButton').textContent='Verificando...';
-  try{const valid=user===AUTH.user&&await verifyPassword(password);if(!valid){$('loginError').classList.remove('hidden');return}sessionStorage.setItem(AUTH_KEY,'1');showApp()}catch(error){$('loginError').textContent='Não foi possível validar o acesso. Verifique sua conexão e tente novamente.';$('loginError').classList.remove('hidden')}finally{$('loginButton').disabled=false;$('loginButton').textContent='Entrar'}
+  try{const valid=await verifyCredentials(user,password);if(!valid){$('loginError').classList.remove('hidden');return}sessionStorage.setItem(AUTH_KEY,'1');showApp()}catch(error){$('loginError').textContent='Não foi possível validar o acesso. Verifique sua conexão e tente novamente.';$('loginError').classList.remove('hidden')}finally{$('loginButton').disabled=false;$('loginButton').textContent='Entrar'}
 }
 function showApp(){$('loginScreen').classList.add('hidden');$('app').classList.remove('hidden');render()}
 function logout(){sessionStorage.removeItem(AUTH_KEY);$('app').classList.add('hidden');$('loginScreen').classList.remove('hidden');$('loginPassword').value=''}
