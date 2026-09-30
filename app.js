@@ -59,7 +59,7 @@ function getFilteredItems(){
   const q=$('search').value.toLowerCase().trim();
   const sf=$('statusFilter').value;
   const df=$('departmentFilter').value;
-  return items.filter(i=>(!q||i.name.toLowerCase().includes(q)||i.description.toLowerCase().includes(q))&&(sf==='Todos'||i.status===sf)&&(df==='Todos'||i.department===df));
+  return items.filter(i=>(!q||i.name.toLowerCase().includes(q)||(i.patrimonio||'').toLowerCase().includes(q))&&(sf==='Todos'||i.status===sf)&&(df==='Todos'||i.department===df));
 }
 
 function render(){
@@ -96,14 +96,14 @@ function icon(name, size = 18) {
 }
 
 function row(i){
-  return `<tr><td><input class="row-check" data-id="${i.id}" type="checkbox" ${selected.includes(i.id)?'checked':''}></td><td><div class="item-cell"><div class="item-image">${i.image?`<img src="${esc(i.image)}" alt="${esc(i.name)}">`:icon('package',26)}</div><div><b>${esc(i.name)}</b><small>${esc(i.description||'Sem descrição')}</small></div></div></td><td>${esc(i.department)}</td><td>R$ ${money(i.value)}</td><td class="quantity-cell">${Math.max(1,Number(i.quantity)||1)}</td><td><select class="status ${statusClass(i.status)} status-select" data-id="${i.id}"><option ${i.status==='Guardado'?'selected':''}>Guardado</option><option ${i.status==='Em Uso'?'selected':''}>Em Uso</option><option ${i.status==='Manutenção'?'selected':''}>Manutenção</option></select></td><td><div class="actions"><button class="icon-btn edit-btn" data-id="${i.id}" title="Editar equipamento">${icon('edit',17)}</button><button class="icon-btn delete-btn" data-id="${i.id}" title="Excluir">${icon('trash',17)}</button></div></td></tr>`;
+  return `<tr><td><input class="row-check" data-id="${i.id}" type="checkbox" ${selected.includes(i.id)?'checked':''}></td><td><div class="item-cell"><div class="item-image">${i.image?`<img src="${esc(i.image)}" alt="${esc(i.name)}">`:icon('package',26)}</div><div><b>${esc(i.name)}</b><small>${esc(i.patrimonio||'Sem patrimônio')}</small></div></div></td><td>${esc(i.department)}</td><td>R$ ${money(i.value)}</td><td class="quantity-cell">${Math.max(1,Number(i.quantity)||1)}</td><td><select class="status ${statusClass(i.status)} status-select" data-id="${i.id}"><option ${i.status==='Guardado'?'selected':''}>Guardado</option><option ${i.status==='Em Uso'?'selected':''}>Em Uso</option><option ${i.status==='Manutenção'?'selected':''}>Manutenção</option></select></td><td><div class="actions"><button class="icon-btn edit-btn" data-id="${i.id}" title="Editar equipamento">${icon('edit',17)}</button><button class="icon-btn delete-btn" data-id="${i.id}" title="Excluir">${icon('trash',17)}</button></div></td></tr>`;
 }
 
 function toggle(id){selected=selected.includes(id)?selected.filter(x=>x!==id):[...selected,id];render()}
 function changeStatus(id,status){const previousItems=JSON.parse(JSON.stringify(items));const x=items.find(i=>i.id===id);if(!x||x.status===status)return;x.status=status;persist();render();showUndo('Status atualizado.');undoData={type:'update',previousItems};}
 function openNew(){editing=null;editingImage='';$('modalTitle').textContent='Novo equipamento';$('saveBtn').textContent='✓ Cadastrar equipamento';fillForm();$('modal').classList.remove('hidden')}
 function openEdit(id){editing=items.find(i=>i.id===id);if(!editing)return;editingImage=editing.image||'';$('modalTitle').textContent='Editar equipamento';$('saveBtn').textContent='✓ Salvar alterações';fillForm(editing);$('modal').classList.remove('hidden')}
-function fillForm(x={}){$('name').value=x.name||'';$('department').value=x.department||'';$('value').value=x.value??0;$('quantity').value=x.quantity||1;$('description').value=x.description||'';$('image').value=x.image&&x.image.startsWith('data:')?'':x.image||'';$('imageFile').value=''}
+function fillForm(x={}){$('name').value=x.name||'';$('department').value=x.department||'';$('value').value=x.value??0;$('quantity').value=x.quantity||1;$('patrimonio').value=(x.patrimonio??x.description??'');$('image').value=x.image&&x.image.startsWith('data:')?'':x.image||'';$('imageFile').value=''}
 function closeModal(){$('modal').classList.add('hidden');editing=null;editingImage=''}
 
 function readFileAsDataUrl(file){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file)})}
@@ -115,7 +115,7 @@ async function save(e){
   const uploadedImage=file?await readFileAsDataUrl(file):'';
   const imageInput=$('image').value.trim();
   const image=uploadedImage||imageInput||(editing?editingImage:'');
-  const data={name:$('name').value.trim(),department:$('department').value.trim(),value:Number($('value').value)||0,quantity:Math.max(1,Number($('quantity').value)||1),description:$('description').value.trim(),image};
+  const data={name:$('name').value.trim(),department:$('department').value.trim(),value:Number($('value').value)||0,quantity:Math.max(1,Number($('quantity').value)||1),patrimonio:$('patrimonio').value.trim(),image};
   if(!data.name||!data.department)return;
   if(editing){items=items.map(x=>x.id===editing.id?{...x,...data}:x);persist();closeModal();render();showUndo('Equipamento atualizado.');undoData={type:'update',previousItems};}
   else{items.push({...data,id:uid(),status:'Guardado'});persist();closeModal();render();toast('Equipamento cadastrado.');}
@@ -200,10 +200,10 @@ async function exportXlsx(){
     const workbook=new ExcelJS.Workbook();
     workbook.creator='EquipControl';workbook.created=new Date();
     const sheet=workbook.addWorksheet('Equipamentos');
-    sheet.columns=[{header:'ID',key:'id',width:20},{header:'Nome',key:'name',width:28},{header:'Departamento',key:'department',width:22},{header:'Valor unitário',key:'value',width:16},{header:'Quantidade',key:'quantity',width:12},{header:'Descrição',key:'description',width:45},{header:'Status',key:'status',width:18},{header:'Imagem',key:'image',width:18}];
+    sheet.columns=[{header:'ID',key:'id',width:20},{header:'Nome',key:'name',width:28},{header:'Departamento',key:'department',width:22},{header:'Valor unitário',key:'value',width:16},{header:'Quantidade',key:'quantity',width:12},{header:'Patrimônio',key:'patrimonio',width:24},{header:'Status',key:'status',width:18},{header:'Imagem',key:'image',width:18}];
     sheet.getRow(1).font={bold:true,color:{argb:'FFFFFFFF'}};sheet.getRow(1).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF245F5A'}};sheet.getRow(1).height=24;sheet.views=[{state:'frozen',ySplit:1}];
     for(let index=0;index<items.length;index++){
-      const item=items[index];const row=sheet.addRow({id:item.id,name:item.name,department:item.department,value:Number(item.value)||0,quantity:Math.max(1,Number(item.quantity)||1),description:item.description||'',status:item.status,image:item.image?'Sim':'Não'});
+      const item=items[index];const row=sheet.addRow({id:item.id,name:item.name,department:item.department,value:Number(item.value)||0,quantity:Math.max(1,Number(item.quantity)||1),patrimonio:item.patrimonio||item.description||'',status:item.status,image:item.image?'Sim':'Não'});
       row.getCell('value').numFmt='R$ #,##0.00';row.alignment={vertical:'top',wrapText:true};row.height=75;
       const imageData=await imageToExcelData(item.image);
       if(imageData){
